@@ -11,8 +11,15 @@ export default defineEventHandler(async (event) => {
   const authString = APIKEY + APISECRET + ts.toString();
   const authHeader = crypto.createHash("sha1").update(authString).digest("hex");
 
+  const query = getQuery(event)
+  const searchQuery = query.searchQuery as string | null
+
+  if(!searchQuery) {
+    return []
+  }
+
   const response = await fetch(
-    "https://api.podcastindex.org/api/1.0/search/byterm?q=At+The+Letters",
+    `https://api.podcastindex.org/api/1.0/search/byterm?q=${searchQuery}`,
     {
       method: "GET",
       headers: {
@@ -39,8 +46,6 @@ export default defineEventHandler(async (event) => {
     console.error('Podcast data validation failed:', validationResult.error);
     return []
   }
-
-  console.log(validationResult)
 
   return validationResult.data.feeds;
 });
