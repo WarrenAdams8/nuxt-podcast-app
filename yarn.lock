@@ -4950,6 +4950,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lucide-vue-next@npm:^0.453.0":
+  version: 0.453.0
+  resolution: "lucide-vue-next@npm:0.453.0"
+  peerDependencies:
+    vue: ">=3.0.1"
+  checksum: 10c0/3de74e8b196bf9af7a369b7315aab85d6ddc2a20f182b42c4fc5613b8ca1469f609403e360b41f0f27f13e3fe52e0db92d3d94f6237df16ea9b4bb4ddb5e4107
+  languageName: node
+  linkType: hard
+
 "magic-string-ast@npm:^0.6.2":
   version: 0.6.2
   resolution: "magic-string-ast@npm:0.6.2"
@@ -5583,6 +5592,7 @@ __metadata:
     "@nuxt/image": "npm:^1.8.1"
     "@vueuse/core": "npm:^11.1.0"
     "@vueuse/nuxt": "npm:^11.1.0"
+    lucide-vue-next: "npm:^0.453.0"
     nuxt: "npm:^3.13.0"
     vue: "npm:latest"
     vue-router: "npm:latest"

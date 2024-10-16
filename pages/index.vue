@@ -18,6 +18,7 @@ const debouncedSearchQuery = refDebounced(searchQuery, 800);
 const { data: feeds, error } = await useLazyAsyncData<Feed[]>(
   `searchQuery:${debouncedSearchQuery.value}`,
   () =>
+   // @ts-ignore
     $fetch(`/api/podcastFeedByTerm?searchQuery=${debouncedSearchQuery.value}`),
   {
     watch: [debouncedSearchQuery],

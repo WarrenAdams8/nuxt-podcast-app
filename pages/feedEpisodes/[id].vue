@@ -3,6 +3,7 @@
     <div v-for="episode in episodes">
         <NuxtImg :src="episode.feedImage" width="100" height="100" fit="contain" />
         <p>{{ episode.title }}</p>
+        <p>{{ episode.enclosureUrl }}</p>
     </div>
 </template>
 <script setup lang="ts">
