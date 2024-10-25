@@ -10,13 +10,22 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@meersagor/wavesurfer-vue": "^0.1.0",
     "@nuxt/image": "^1.8.1",
+    "@nuxt/ui": "^3.0.0-alpha.7",
+    "@pinia/nuxt": "^0.5.5",
     "@vueuse/core": "^11.1.0",
     "@vueuse/nuxt": "^11.1.0",
     "lucide-vue-next": "^0.453.0",
     "nuxt": "^3.13.0",
+    "pinia": "^2.2.4",
     "vue": "latest",
     "vue-router": "latest",
+    "wavesurfer.js": "^7.8.7",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vue-tsc": "^2.1.6"
   }
 }

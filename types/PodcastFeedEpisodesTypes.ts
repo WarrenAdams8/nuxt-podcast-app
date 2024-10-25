@@ -128,4 +128,5 @@ export const ResponseSchema = z
   })
 
   export type EpisodeItem = z.infer<typeof EpisodeItem>;
+  export type feedResponse = z.infer<typeof ResponseSchema>;
 

@@ -1,311 +1,160 @@
-<script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useMediaControls } from '@vueuse/core'
-import { Play, Pause, Rewind, FastForward, Volume2, Info, List } from 'lucide-vue-next'
+<template>
+  <div class="fixed bottom-0 left-0 right-0 z-50">
+    <!-- Mini player stays the same -->
+    <div v-if="isCollapsed"
+      class="w-full bg-gray-900/95 backdrop-blur-md border-t border-gray-800 py-2 px-4 cursor-pointer"
+      @click="isCollapsed = false">
+      <!-- ... mini player content ... -->
+    </div>
 
-const audio = ref<HTMLAudioElement>()
+    <!-- Full player with updated layout -->
+    <div v-else class="w-full bg-gray-900/95 backdrop-blur-md border-t border-gray-800 px-4 pt-2 pb-4">
+      <div class="flex justify-end">
+        <UButton color="white" variant="ghost" icon="i-heroicons-chevron-down" size="xs" @click="isCollapsed = true" />
+      </div>
+
+      <audio ref="audio" :src="audioSrc" />
+
+      <div class="flex items-start lg:items-center">
+        <!-- Track Info - Left aligned -->
+        <div class="flex items-start space-x-4 w-72 flex-shrink-0">
+          <div class="w-16 h-16 flex-shrink-0 bg-gray-800 rounded">
+            <img v-if="coverArt" :src="coverArt" alt="Album Art" class="w-full h-full object-cover rounded">
+          </div>
+          <div class="min-w-0 flex-1 pt-1">
+            <div class="overflow-hidden">
+              <h3 :class="[
+      'text-lg font-semibold text-white whitespace-nowrap',
+      title.length > 25 ? 'animate-scroll hover:pause' : ''
+    ]">
+                {{ title }}
+              </h3>
+            </div>
+            <div class="overflow-hidden">
+              <p :class="[
+      'text-sm text-gray-400 whitespace-nowrap',
+      artist.length > 25 ? 'animate-scroll hover:pause' : ''
+    ]">
+                {{ artist }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress and Controls - Centered -->
+        <div class="flex-1 flex flex-col items-center">
+          <!-- Progress Bar Container -->
+          <div class="w-full max-w-2xl px-6 mb-3">
+            <USlider v-model="sliderValue" :min="0" :max="duration" :step="0.1" @update:model-value="handleSeek" />
+            <div class="flex justify-between text-xs text-gray-400 mt-1">
+              <span>{{ formatTime(currentTime) }}</span>
+              <span>{{ formatTime(duration) }}</span>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex items-center justify-center space-x-6">
+            <UButton color="white" variant="ghost" @click="skipBackward">
+              <div class="flex items-center text-sm">
+                <span class="i-heroicons-backward-15 mr-1" />
+                15
+              </div>
+            </UButton>
+            <UButton color="white" variant="ghost" size="xl" :icon="playing ? 'i-heroicons-pause' : 'i-heroicons-play'"
+              @click="playing = !playing" />
+            <UButton color="white" variant="ghost" @click="skipForward">
+              <div class="flex items-center text-sm">
+                15
+                <span class="i-heroicons-forward-15 ml-1" />
+              </div>
+            </UButton>
+          </div>
+        </div>
+
+        <!-- Empty div for balance -->
+        <div class="w-72 flex-shrink-0 hidden lg:block"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spacer -->
+  <div :style="{ height: isCollapsed ? '64px' : '140px' }" class="w-full"></div>
+</template>
+
+<script setup>
+import { ref, watch } from 'vue'
+import { useMediaControls } from '@vueuse/core'
+
+
+const audio = ref()
+const isCollapsed = ref(false)
+const sliderValue = ref(0)
+
+const store = useAudioPlayerStore()
+const { audioSrc,coverArt,title,artist } = storeToRefs(store)
+
+console.log(audioSrc.value)
+
 const {
   playing,
   currentTime,
-  duration,
-  volume,
-  muted,
-  seeking,
-  ended
+  duration
 } = useMediaControls(audio, {
-  src: 'https://chtbl.com/track/38G147/injector.simplecastaudio.com/6d9cb854-64df-4cec-adf4-10a881785a7b/episodes/4103eba6-f2f0-409b-a22d-fd8b763e75e3/audio/128/default.mp3?aid=rss_feed&awCollectionId=6d9cb854-64df-4cec-adf4-10a881785a7b&awEpisodeId=4103eba6-f2f0-409b-a22d-fd8b763e75e3&feed=R14Ca9Ii',
+  src: audioSrc.value
 })
 
-const formatTime = (time: number) => {
+watch(currentTime, (newTime) => {
+  sliderValue.value = newTime
+})
+
+const handleSeek = (value) => {
+  if (audio.value) {
+    audio.value.currentTime = value
+  }
+}
+
+const formatTime = (time) => {
+  if (!time) return '0:00'
   const minutes = Math.floor(time / 60)
   const seconds = Math.floor(time % 60)
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
-const progress = computed(() => (currentTime.value / duration.value) * 100)
-
-const seekAudio = (event: MouseEvent) => {
-  const rect = (event.target as HTMLElement).getBoundingClientRect()
-  const percent = (event.clientX - rect.left) / rect.width
-  currentTime.value = percent * duration.value
+const skipForward = () => {
+  if (audio.value) {
+    audio.value.currentTime = Math.min(currentTime.value + 15, duration.value)
+  }
 }
 
 const skipBackward = () => {
-  currentTime.value = Math.max(currentTime.value - 15, 0)
-}
-
-const skipForward = () => {
-  currentTime.value = Math.min(currentTime.value + 30, duration.value)
-}
-
-watch(ended, (hasEnded) => {
-  if (hasEnded) {
-    currentTime.value = 0
-  }
-})
-
-const togglePlay = () => {
   if (audio.value) {
-    if (playing.value) {
-      audio.value.pause()
-    } else {
-      audio.value.play()
-    }
+    audio.value.currentTime = Math.max(currentTime.value - 15, 0)
   }
-}
-
-const toggleMute = () => {
-  muted.value = !muted.value
-}
-
-const isLoading = computed(() => seeking.value)
-
-const isDragging = ref(false)
-
-const startDrag = (event: MouseEvent) => {
-  isDragging.value = true
-  document.addEventListener('mousemove', drag)
-  document.addEventListener('mouseup', stopDrag)
-  drag(event)
-}
-
-const drag = (event: MouseEvent) => {
-  if (isDragging.value) {
-    const progressBar = document.querySelector('.progress-bar') as HTMLElement
-    const rect = progressBar.getBoundingClientRect()
-    const percent = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
-    currentTime.value = percent * duration.value
-  }
-}
-
-const stopDrag = () => {
-  isDragging.value = false
-  document.removeEventListener('mousemove', drag)
-  document.removeEventListener('mouseup', stopDrag)
 }
 </script>
 
-<template>
-  <div class="audio-player">
-    <audio ref="audio" />
-    <div class="controls">
-      <button @click="skipBackward" class="control-button skip-button" aria-label="Skip backward 15 seconds">
-        <Rewind :size="20" />
-        <span class="skip-text">15</span>
-      </button>
-      <button @click="togglePlay" class="control-button play-pause" :aria-label="playing ? 'Pause' : 'Play'">
-        <Play v-if="!playing" :size="24" />
-        <Pause v-else :size="24" />
-      </button>
-      <button @click="skipForward" class="control-button skip-button" aria-label="Skip forward 30 seconds">
-        <FastForward :size="20" />
-        <span class="skip-text">30</span>
-      </button>
-    </div>
-    <div class="info">
-      <h2 class="title">Make a Splash? With Dave Flemming</h2>
-      <p class="show-info">The TK Show: A Show about sports in the Bay Area — November 29, 2023</p>
-    </div>
-    <div class="volume-controls">
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        v-model="volume"
-        class="volume-slider"
-        aria-label="Volume"
-      />
-      <button @click="toggleMute" class="control-button" :aria-label="muted ? 'Unmute' : 'Mute'">
-        <Volume2 :size="20" />
-      </button>
-    </div>
-    <div class="additional-controls">
-      <button class="control-button" aria-label="Show information">
-        <Info :size="20" />
-      </button>
-      <button class="control-button" aria-label="Show playlist">
-        <List :size="20" />
-      </button>
-    </div>
-    <div class="progress-bar" @click="seekAudio">
-      <div class="progress" :style="{ width: `${progress}%` }"></div>
-      <div 
-        class="progress-ball" 
-        :style="{ left: `${progress}%` }"
-        @mousedown="startDrag"
-        role="slider"
-        :aria-valuenow="currentTime"
-        :aria-valuemin="0"
-        :aria-valuemax="duration"
-        :aria-valuetext="`${formatTime(currentTime)} of ${formatTime(duration)}`"
-      ></div>
-    </div>
-    <div class="time-display">
-      {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
-    </div>
-    <div v-if="isLoading" class="loading-indicator" aria-live="polite">Loading...</div>
-  </div>
-</template>
-
-<style scoped>
-.audio-player-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-}
-
-.audio-player {
-  background-color: #1a1a1a;
-  color: white;
-  padding: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  font-family: Arial, sans-serif;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.control-button {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.skip-button {
-  position: relative;
-}
-
-.skip-text {
-  position: absolute;
-  font-size: 10px;
-  bottom: -2px;
-}
-
-.play-pause {
-  background-color: #333;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-}
-
-.info {
-  flex-grow: 1;
-  margin: 0 15px;
-}
-
-.title {
-  font-size: 16px;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.show-info {
-  font-size: 12px;
-  color: #999;
-  margin: 0;
-}
-
-.volume-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.volume-slider {
-  width: 80px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: #4a4a4a;
-  outline: none;
-  border-radius: 15px;
-  height: 5px;
-}
-
-.volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 15px;
-  height: 15px;
-  background: white;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.additional-controls {
-  display: flex;
-  gap: 10px;
-  margin-left: 15px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 4px;
-  background-color: #4a4a4a;
-  margin-top: 10px;
-  cursor: pointer;
-  position: relative;
-}
-
-.progress {
-  height: 100%;
-  background-color: #1db954;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.progress-ball {
-  width: 12px;
-  height: 12px;
-  background-color: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-}
-
-.time-display {
-  font-size: 12px;
-  color: #999;
-  margin-top: 5px;
-  width: 100%;
-  text-align: right;
-}
-
-.loading-indicator {
-  margin-top: 10px;
-  text-align: center;
-}
-
-@media (max-width: 768px) {
-  .audio-player {
-    flex-direction: column;
-    align-items: stretch;
+<style>
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
   }
 
-  .info, .volume-controls, .additional-controls {
-    margin: 10px 0;
+  100% {
+    transform: translateX(-50%);
   }
+}
 
-  .progress-bar {
-    margin-top: 15px;
-  }
+.animate-scroll {
+  display: inline-block;
+  padding-right: 2rem;
+  animation: scroll 15s linear infinite;
+}
+
+.animate-scroll.pause {
+  animation-play-state: paused;
+}
+
+.hover\:pause:hover {
+  animation-play-state: paused;
 }
 </style>

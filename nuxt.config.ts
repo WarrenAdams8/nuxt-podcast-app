@@ -6,5 +6,5 @@ export default defineNuxtConfig({
     podcastApiKey: "",
     podcastApiSecret: "",
   },
-  modules: ['@vueuse/nuxt', "@nuxt/image"]
+  modules: ['@vueuse/nuxt', "@nuxt/image", "@nuxt/ui", "@pinia/nuxt"]
 });
