@@ -54,6 +54,17 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
+    const play = async () => {
+        if (audioRef.value) {
+            try {
+                await audioRef.value.play()
+                playing.value = true
+            } catch (error) {
+                console.error('Playback failed:', error)
+            }
+        }
+    }
+
     return {
         // State
         audioSrc,
@@ -72,6 +83,7 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
         skipForward,
         skipBackward,
         togglePlay,
-        formatTime
+        formatTime,
+        play
     }
 })
