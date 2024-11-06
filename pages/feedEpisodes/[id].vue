@@ -26,7 +26,8 @@
 
         <!-- Episodes List -->
         <div class="space-y-4">
-            <div v-for="episode in episodes" :key="episode.id" @click="changeAudioPlayer(episode)" class="group p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer 
+            <div v-for="episode in episodes" :key="episode.id"
+                @click="store.changeEpisode(episode, feedInfo?.feed?.author)" class="group p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer 
             transition-all duration-200 rounded-xl border border-gray-200 
             dark:border-gray-700 hover:shadow-md">
                 <div class="flex items-center gap-4">
@@ -62,23 +63,5 @@ const { data: episodes, error } = useLazyFetch<EpisodeItem[]>(`/api/podcastFeedE
 const store = useAudioPlayerStore()
 const { audioSrc, coverArt, title, artist } = storeToRefs(store)
 
-const changeAudioPlayer = async (episode: EpisodeItem) => {
-    // If clicking the currently playing episode, toggle play/pause
-    if (audioSrc.value === episode.enclosureUrl) {
-        store.togglePlay()
-        return
-    }
-
-    // Otherwise, start playing the new episode
-    title.value = episode.title,
-        audioSrc.value = episode.enclosureUrl,
-        coverArt.value = episode.feedImage
-    if (feedInfo) {
-        artist.value = feedInfo.value?.feed?.author || "unknown artist"
-    }
-
-    await nextTick()
-    await store.play()
-}
 
 </script>

@@ -1,4 +1,5 @@
 import { useMediaControls } from '@vueuse/core'
+import type { EpisodeItem } from '~/types/PodcastFeedEpisodesTypes'
 
 export const useAudioPlayerStore = defineStore('audioPlayer', () => {
 
@@ -65,6 +66,23 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
         }
     }
 
+    const changeEpisode = async (episode: EpisodeItem, podcastAuthor?: string) => {
+        // If clicking the currently playing episode, toggle play/pause
+        if (audioSrc.value === episode.enclosureUrl) {
+            togglePlay()
+            return
+        }
+
+        // Otherwise, update episode details and start playing
+        title.value = episode.title
+        audioSrc.value = episode.enclosureUrl
+        coverArt.value = episode.feedImage
+        artist.value = podcastAuthor || 'unknown artist'
+
+        await nextTick()
+        await play()
+    }
+
     return {
         // State
         audioSrc,
@@ -84,6 +102,7 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
         skipBackward,
         togglePlay,
         formatTime,
-        play
+        play,
+        changeEpisode
     }
 })

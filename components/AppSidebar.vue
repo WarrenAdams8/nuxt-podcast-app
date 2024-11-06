@@ -21,7 +21,7 @@
             </li>
             <li>
               <NuxtLink
-                to="/discover"
+                to="/"
                 class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800"
                 active-class="bg-gray-200 dark:bg-gray-800"
               >
@@ -31,7 +31,7 @@
             </li>
             <li>
               <NuxtLink
-                to="/library"
+                to="/"
                 class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800"
                 active-class="bg-gray-200 dark:bg-gray-800"
               >
